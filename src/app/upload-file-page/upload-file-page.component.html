@@ -1,0 +1,162 @@
+
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+/>
+<div class="upload-container">
+  <!-- Upload Instructions -->
+  <h2 *ngIf="!file" class="centered-title">
+    <i class="fas fa-cloud-upload-alt"></i> Upload File
+  </h2>
+  
+  <div class="upload-controls" *ngIf="!file">
+    <div
+      class="drop-area"
+      (drop)="onFileDropped($event)"
+      (dragover)="onDragOver($event)"
+      (click)="openFileDialog()"
+    >
+      <i class="fas fa-file-upload enlarged-icon"></i>
+      <p class="drop-text">Drag & Drop File Here or click to select a file</p>
+      <input
+        type="file"
+        (change)="onFileSelected($event)"
+        style="display: none"
+        id="fileInput"
+      />
+    </div>
+
+    <!-- Upload Progress -->
+    <div *ngIf="isUploading" class="upload-progress">
+      <p>Uploading... {{ uploadProgress }}%</p>
+      <div class="progress-bar">
+        <div
+          class="progress"
+          [ngStyle]="{ width: uploadProgress + '%' }"
+        ></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- File Details and Table -->
+  <div *ngIf="file" class="upload-status">
+    <h3>File Details</h3>
+    <p><strong>File Name:</strong> {{ fileName }}</p>
+    <p><strong>File Size:</strong> {{ fileSize }}</p>
+
+    <!-- Display Upload Progress -->
+    <div *ngIf="isUploading">
+      <h4>Uploading... {{ uploadProgress }}%</h4>
+      <div class="progress-bar">
+        <div
+          class="progress"
+          [ngStyle]="{ width: uploadProgress + '%' }"
+        ></div>
+      </div>
+    </div>
+
+    <!-- Save Options and Filtering -->
+    <div *ngIf="!isUploading">
+      <div class="save-options">
+        <button (click)="promptSaveOptions()">
+          <i class="fas fa-save"></i> Upload New File
+        </button>
+      </div>
+
+      <div class="filter-container">
+        <input
+          type="text"
+          [(ngModel)]="filterText"
+          (input)="filterTable()"
+          class="filter-input"
+          placeholder="Filter by any column..."
+        />
+      </div>
+
+      <!-- Table Display -->
+      <div class="table-scroll-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th
+                *ngFor="let header of headers; let i = index"
+                (click)="sortTable(header)"
+              >
+                <abbr
+                  *ngIf="header.length > 10"
+                  [attr.title]="header"
+                >
+                  {{ header | slice:0:10 }}...
+                </abbr>
+                <span *ngIf="header.length <= 10">{{ header }}</span>
+                <i
+                  *ngIf="sortColumn === header"
+                  class="sort-icon"
+                  [ngClass]="{
+                    'fas fa-chevron-up': sortOrder === 'asc',
+                    'fas fa-chevron-down': sortOrder === 'desc'
+                  }"
+                ></i>
+                <i *ngIf="sortColumn !== header" class="fas fa-sort"></i>
+                <button (click)="updateHeader(i)">
+                  <i class="fas fa-edit"></i>
+                </button>
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let row of filteredData">
+              <td
+                *ngFor="let cell of [
+                  row.date,
+                  row.time,
+                  row.transfer,
+                  row.address
+                ]"
+                [ngClass]="{
+                  highlight:
+                    filterText &&
+                    cell
+                      .toString()
+                      .toLowerCase()
+                      .includes(filterText.toLowerCase())
+                }"
+              >
+                <abbr
+                  *ngIf="cell === row.address"
+                  [attr.title]="getFullPath(row.address)"
+                  [innerHTML]="getShortenedPath(row.address)"
+                ></abbr>
+                <ng-container *ngIf="cell !== row.address">
+                  {{ cell }}
+                </ng-container>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Save Prompt Dialog -->
+  <div *ngIf="showDialog" class="dialog-overlay">
+    <div class="dialog-box">
+      <p>
+        <i class="fas fa-question-circle"></i> Would you like to save the
+        current table before uploading a new file?
+      </p>
+      <div class="dialog-buttons">
+        <button (click)="onCancel()">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button (click)="onIgnore()" style="margin-left: auto;">
+          <i class="fas fa-step-forward"></i> Ignore
+        </button>
+        <button (click)="onSave()">
+          <i class="fas fa-save"></i> Save
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
